@@ -1,0 +1,417 @@
+<html> <!-- Source: https://codepen.io/savemuse/pen/bgQQxp -->
+<head>
+ <style>
+ 	 body {
+     font-family: sans-serif;
+   	 width: 600px;
+   }
+
+	 h1 {
+	   font-family: sans-serif;
+	   font-size: 1rem;
+	   margin-top: 0px;
+	   margin-bottom: 0px;
+	 }
+	
+	 h2 {
+	   font-family: sans-serif;
+	   font-size: .9rem;
+	   font-weight: 400;
+	   margin-bottom: 0px;
+	 }
+	
+	 text {
+	   font-size: .9rem;
+	   user-select: none;
+	   pointer-events: none;
+	 }
+
+   .notes {
+     font-size: .8rem;
+   }
+
+   .transition {
+     fill: #ddd;
+   }
+
+   #controls {
+     margin-top: 25px;
+     font-size: .9rem;
+   }
+
+	 #federalLabel {
+	   color: #D17333;
+	   font-weight: 700;
+	 }
+	
+	 #hybridLabel {
+	   color: #06576D;
+	   font-weight: 700;
+	 }
+	
+	 #guarantorLabel {
+	   color: #666666;
+	   font-weight: 700;
+	 }
+	
+	 #privateLabel {
+	   color: #4F844F;
+	   font-weight: 700;
+   }
+ 	
+ 	 .points text {
+     font-weight: 700;
+     text-anchor: right;
+     font-size: 0.9rem;
+   }
+ 	
+   .line {
+     fill: none;
+     stroke-width: 2px;
+   }
+    
+   .overlay {
+     fill: none;
+     pointer-events: all;
+   }
+   
+   .hover-line {
+     stroke: #999;
+     stroke-width: 2px;
+     stroke-dasharray: 3,3;
+   }
+   
+  </style>
+</head>
+  
+<body>
+    <h1>
+     Figure 1.
+    </h1>
+    <h1>
+     Volume of New Federal Loan Guarantees Under Alternatives for the Secondary Mortgage Market, 2019 to 2028
+    </h1>
+    <h2>
+     Billions of Dollars
+    </h2>
+
+    <svg width="600" height="300"></svg>
+       
+    <div id="controls">
+      <input name="mode" type="radio" value="federal" id="federalButton" checked><label for="federalButton"><span id="federalLabel">March 2018 Baeline/Market with a Single, Fully Federal Agency</span></label><br/>
+      <input name="mode" type="radio" value="hybrid" id="hybridButton"><label for="hybridButton"><span id="hybridLabel">Hybrid Public-Private Market</span></label><br/>
+      <input name="mode" type="radio" value="guarantor" id="guarantorButton"><label for="guarantorButton"><span id="guarantorLabel">Market With the Government as Guarantor of Last Resort</span></label><br/>
+      <input name="mode" type="radio" value="private" id="privateButton"><label for="privateButton"><span id="privateLabel">Largely Private Market</span></label><br/>
+    </div>
+    <div class="notes">
+      <p style="margin-top: 20px; border-top: thin solid black; padding-top: 10px;">
+        Source: Congressional Budget Office.
+      </p>
+    </div>
+
+</body>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+ "use strict";
+
+// ` allows for multi-line text input 
+var volume_data = `year,federal,hybrid,guarantor,private
+2010,1167.9,null,null,null
+2011,1082,null,null,null
+2012,1293.4,null,null,null
+2013,1438.5,null,null,null
+2014,708.5,null,null,null
+2015,930.9,null,null,null
+2016,968.3,null,null,null
+2017,1050,null,null,null
+2018,1026.1,1026.1,1026.1,1026.1
+2019,916.6,816.6,824.9,817
+2020,897.6,763.7,673.2,594
+2021,927.5,789.1,556.5,465
+2022,1055.3,844.1,470.3,377
+2023,1275.9,980.3,383.6,409
+2024,1374,1055.7,131.4,0
+2025,1314.8,1010.2,124.5,0
+2026,1301.2,999.7,136.1,0
+2027,1331.1,1022.7,128.5,0
+2028,1368.498,1051.4,146.8,0`;
+
+var parsed_volume_data = d3.csvParse(volume_data);
+//console.log(parsed_volume_data);
+
+  // Transform the data for charting: Start off with just the Fully Federal as the baseline
+  var federal_data = ["federal"].map(function (id) {
+    return {
+      id: id,
+      values: parsed_volume_data.map(function (d) {
+        return { year: +d.year, value: +d[id] };  // + converts null to NaN, which needs to be dealt with appropriately, below
+      })
+    };
+  });
+
+  // Define the data for the Hybrid option (with Federal also included)
+  var hybrid_data = ["federal", "hybrid"].map(function (id) {
+    return {
+      id: id,
+      values: parsed_volume_data.map(function (d) {
+        return { year: +d.year, value: +d[id] };  // + converts null to NaN, which needs to be dealt with appropriately, below
+      })
+    };
+  });
+
+  // Define the data for the Guarantor of Last Resort option (with Federal also included)
+  var guarantor_data = ["federal", "guarantor"].map(function (id) {
+    return {
+      id: id,
+      values: parsed_volume_data.map(function (d) {
+        return { year: +d.year, value: +d[id] };  // + converts null to NaN, which needs to be dealt with appropriately, below
+      })
+    };
+  });
+
+  // Define the data for the Fully Private option (with Federal also included)
+  var private_data = ["federal", "private"].map(function (id) {
+    return {
+      id: id,
+      values: parsed_volume_data.map(function (d) {
+        return { year: +d.year, value: +d[id] };  // + converts null to NaN, which needs to be dealt with appropriately, below
+      })
+    };
+  });
+
+  var current_data = void 0;
+  current_data = federal_data;
+  //console.log(volume_data);
+  //console.log(current_data);
+
+	var transition_period = [{ "start": 2018, "end": 2023 }];
+
+
+  /*
+  ** Start drawing the chart!
+  */
+
+	// Set the dimensions and margins of the chart
+	var margin = { top: 10, right: 60, bottom: 20, left: 50 },  
+	    svg = d3.select('svg'),
+	    width = +svg.attr('width') - margin.left - margin.right,
+	    height = +svg.attr('height') - margin.top - margin.bottom;
+	
+	// Define the chart
+	var chart = svg.append("g")
+	               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
+	// Set domains and ranges
+	var x = d3.scaleLinear().domain([2010, 2028]).range([0, width]);    // in d3.v4, d3.scale.linear() became d3.scaleLinear()
+	var y = d3.scaleLinear().domain([1600, 0]).range([0, height]);      // in d3.v4, d3.scale.linear() became d3.scaleLinear()
+	var colors = d3.scaleOrdinal().domain(["federal", "hybrid", "guarantor", "private"])
+	                              .range(["#D17333", "#06576D", "#666666", "#4F844F"]);  // in d3.v4, d3.scale.ordinal() became d3.scaleOrdinal()
+
+  // Draw shaded transition period 
+  var transition = chart.selectAll(".transition")
+                        .data(transition_period)
+                       .enter()
+                        .append("rect")
+                        .attr("class", "transition")
+                        .attr("x", function (d) {return x(d.start); })
+                        .attr("y", 0)
+                        .attr("width", function (d) { return x(d.end) - x(d.start); })
+                        .attr("height", height);
+
+	// Define the line
+	var line = d3.line()
+	             .defined(function(d) { return (d.value >= 0); }) // don't plot null/NaN values (but do plot zero values)
+	             .x(function(d) { return x(d.year); })
+	             .y(function(d) { return y(d.value); });
+	
+	// Draw the lines
+	var volume = chart.selectAll(".volume")
+									  .data(current_data)
+									 .enter()
+									  .append("g")
+									  .attr("class", "volume");
+	
+	volume.append("path")
+			  .attr("class", "line")
+			  .attr("d", function(d) { /*console.log(d.values); */ return line(d.values); })
+			  .style("stroke-width", 2)
+		    .style("stroke", function(d) { return colors(d.id); });
+
+	// Draw the vertical line to move with the mouse
+	var vertical_line = chart.append('g')
+	                         .attr('class', 'vertical_line')
+	                         .style('display', 'none');
+	
+	vertical_line.append('line')
+	  					 .attr('class', 'x-hover-line hover-line')
+	  					 .attr('y1' , 20)  // start below the top of the chart because of the History/Transition/Steady-State labels
+	  					 .attr('y2', height);
+
+	// Add placeholders for the datalabel text
+	var points = chart.selectAll('.points')
+									  .data(current_data)
+									 .enter()
+									  .append('g')
+									  .attr('class', 'points')
+									  .append('text');
+
+	// Add placeholders for the datalabel circles
+	var circles = chart.selectAll('.circles')
+	                   .data(current_data)
+	                 .enter()
+	                   .append('g')
+	                   .attr("class", "circles")
+	                   .append("circle");
+	
+	// Draw the axes
+	chart.append("g")
+	     .attr("class", "axis axis--x")
+	     .attr("transform", "translate(0," + height + ")")
+	     .call(d3.axisBottom(x).tickSize(-6).tickPadding(6).tickFormat(d3.format("")));
+
+	chart.append("g")
+	     .attr("class", "axis axis--y")
+	     .attr("transform", "translate(0,0)")
+	     .call(d3.axisLeft(y).tickSize(-6).tickPadding(6));
+	
+	// Add a target rect element to catch mouse events
+	svg.append('rect')
+	  .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+	  .attr("class", "overlay")
+	  .attr("width", width + 50)
+	  .attr("height", height + 50)
+	  .on("mouseover", mouseover)
+	  .on("mouseout", mouseout)
+	  .on("mousemove", mousemove);
+
+  // Create an array of svg x coordinates for use in mousemove() function, below
+	var xYears = parsed_volume_data.map(function(d) { return x(+d.year); });
+	//console.log(width, parsed_volume_data.length);
+	//console.log(parsed_volume_data, xYears);
+
+
+  /*
+  ** Functions for mouse effects
+  */
+	function mouseover() {
+	  vertical_line.style("display", null);
+	  d3.selectAll('.circles circle').style("display", null);
+	  d3.selectAll('.points text').style("display", null);
+	}
+	
+	function mouseout() {
+	  vertical_line.style("display", "none");
+	  d3.selectAll('.circles circle').style("display", "none");
+	  d3.selectAll('.points text').style("display", "none");
+	}
+	
+	function mousemove() {
+		var mouseX = d3.mouse(this)[0];
+		
+		
+	  var i = d3.bisect(xYears, mouseX, 1);
+	  //console.log(i, mouseX);	  
+	  var di = parsed_volume_data[i-1];
+	  //console.log(di);
+	    
+	  var format = d3.format(","); // comma at thousands   
+	    
+	  d3.selectAll('.points text')
+	    .text(function(d) { 
+	    	if (!isNaN(d.values[i-1].value)) {       // Only show text if value not NaN
+	    		//console.log(d.values[i-1].value);
+	    		return format(d.values[i-1].value.toFixed(0)); 
+	    	} 
+	    })
+	    .attr('x', function(d) { return x(di.year) + 10; })
+	    .attr('y', function(d) { return isNaN(d.values[i-1].value) ? null : y(d.values[i-1].value); })  // return null if value is NaN
+	    //.style('fill', function(d) { return colors(d.id); });
+	    .style('fill', function(d) { return 'black'; });
+	
+	  d3.selectAll('.circles circle')
+	    .attr("r", function(d) { return isNaN(d.values[i-1].value) ? 0 : 4 } ) // return 0 if value is NaN
+	    .attr("cx", function(d) { return x(di.year); })
+	    .attr("cy", function(d) { return isNaN(d.values[i-1].value) ? null : y(d.values[i-1].value); }) // return null if value is NaN
+	    .style("stroke-width", 2)
+	    .style("fill", "#FFF")
+	    //.style("fill", function(d) { return colors(d.name)})
+	    .style("stroke", function(d) { return colors(d.id); });
+	
+	  vertical_line.attr("transform", "translate(" + x(di.year) + ",0)");
+	}
+
+  /*
+  ** Changes lines on radio button selection
+  */
+  d3.selectAll("#controls input[name=mode]").on("change", function () {
+
+    current_data = this.value === "federal" ? federal_data 
+                 : this.value === "hybrid" ? hybrid_data
+                 : this.value === "guarantor" ? guarantor_data
+                 : this.value === "private" ? private_data 
+                 : null;
+
+    chart.selectAll(".volume").remove();
+    chart.selectAll(".points").remove();
+    chart.selectAll(".circles").remove();
+
+    var line = d3.line()
+                 .defined(function(d) { return (d.value >= 0); }) // don't plot null/NaN values (but do plot zero values)
+                 .x(function (d) { return x(d.year); })
+                 .y(function (d) { return y(d.value); });
+
+    var updatedSelection = chart.selectAll(".volume")
+                               .data(current_data)
+                                .enter()
+                                .append("g")
+                                .attr("class", "volume");
+
+    updatedSelection.append("path")
+                    .attr("class", "line")
+                    .attr("d", function (d) { return line(d.values); })
+                    .style("stroke", function (d) { return colors(d.id); });
+  
+    updatedSelection.append('g')
+                    .attr('class', 'points')
+                    .append('text');
+                    //.style('fill', function(d) { return colors(d.id); });
+  
+    updatedSelection.append('g')
+                    .attr('class', 'circles')
+                    .append('circle');
+   
+  });
+
+  /*
+  ** Add Text labels for sections of time series 
+  */
+  chart.append("text")
+     .style("fill", "black")
+     .style("opacity", 1)
+     .append("tspan")
+     .text("Actual")
+     .attr("x", x(2016))
+     .attr("y", 14)
+     .attr("text-anchor", "middle");
+
+ chart.append("text")
+     .style("fill", "black")
+     .style("opacity", 1)
+     .append("tspan")
+     .text("Transition Period")
+     .attr("x", x(2020.5))
+     .attr("y", 14)
+     .attr("text-anchor", "middle");
+ 
+  chart.append("text")
+     .style("fill", "black")
+     .style("opacity", 1)
+     .append("tspan")
+     .text("New Structure")
+     .attr("x", x(2025.5))
+     .attr("y", 14)
+     .attr("text-anchor", "middle");
+
+</script>
+</html>

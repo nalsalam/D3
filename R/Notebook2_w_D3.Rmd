@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+```{r, include = F}
+library(tidyverse, quietly = T)
+
+send_df_to_js <- function(df){
+  cat(
+    paste(
+    '<script>
+      var data = ', jsonlite::toJSON(df),';
+    </script>'
+    , sep="")
+  )
+}
+
+```
+
+Use R to read the price data.
+
+```{r}
+prices <- read.csv("D3/prices.csv") %>%
+          mutate(month = lubridate::mdy(month))
+
+```
+
+Use the jsonlite::toJSON function to write the prices dataframe to the html page so that javascript can access it.
+
+```{r, results = "asis"}
+send_df_to_js(prices)
+
+```
+
+Plot it. 
+
+```{js}
+ // Time series line chart
+
+// 
+var parseDate = d3.timeParse("%Y-%m-%d");
+ 
+ 
+// height & width in pixels
+	var height = 300;
+	var width = 500;
+
+// min/max of data in arrays
+	var ydomain = [0, d3.max(data, function(d){return d.price;})];
+	var xdomain = [d3.min(data, function(d){return d.month;}), d3.max(data, function(d){return d.month;})];
+	
+// console.log(xdomain);
+
+// scales: functions that map data to pixels, used by both the axis generators and the line/path generator
+	y = d3.scaleLinear().domain(ydomain).range([height,0]);
+	x = d3.scaleTime().domain(xdomain).range([0,width]);
+
+// x & y axis generators: 
+	var yAxis = d3.axisLeft(y);
+	var xAxis = d3.axisBottom(x);
+
+// add svg
+	var svg = d3.select("body").append("svg").attr("height","100%").attr("width","100%");
+
+// declare margins object
+	var margin = {left:50, right:50, top:40, bottom:40};
+
+// add group element & translate
+	var chartGroup = svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")");
+
+// create line generator  (modify ccs for path to fill = none)
+	var line = d3.line()
+				.y(function(d) {return y(d.price);})
+				.x(function(d) {return x(d.month);});
+
+// append line by calling generator
+	chartGroup.append("path").attr("d",line(data));
+	
+// append axes by calling generator
+	chartGroup.append("g").attr("class","axis y").call(yAxis);
+	chartGroup.append("g").attr("class","axis x").call(xAxis)
+// translate x axis down 
+	.attr("transform","translate(0,"+height+")");
+
+// Add title
+	chartGroup.append("text")
+		.attr("class", "chart_title")
+        .attr("x", 0)             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "start")
+        .text("Chart title");
+// Add sub-title
+	chartGroup.append("text")
+		.attr("class", "chart_subtitle")
+        .attr("x", 0)             
+        .attr("y", 0)
+        .attr("text-anchor", "start")
+        .text("Subtitle");		
+
+// Add sub-title
+	chartGroup.append("text")
+		.attr("class", "chart_caption")
+		.attr("x", 0)             
+		.attr("y", height + 40 )
+		.attr("text-anchor", "start")
+		.text("Source: ... ");
+
+  });
+
+```
+

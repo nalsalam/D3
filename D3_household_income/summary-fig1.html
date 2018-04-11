@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+</head>
+<style>
+body {
+  background-color: white;
+}
+
+#chart {
+  background-color: white;
+  width: 800px;
+  height 800px;
+  float: left;
+  padding: 0px;
+  //  border-style: solid;
+  //  border-width: 1px;
+}
+
+#chart svg {
+    background-color: white;
+    text-align: right;
+    padding: 25px;
+    margin: 15px;
+    //border-style: solid;
+    //border-width: 1px;
+}
+
+/* rect:hover{
+  stroke: black;
+  stroke-width: 2px;
+} */
+
+.chart text {
+  fill: black;
+  font: 12px sans-serif;
+  text-anchor: middle;
+}
+
+.axis text {
+  font: 12px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: rgb(75,75,75);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: left;
+    width: 200px;
+    height: 50px;
+    padding: 10px;
+
+    font: 12px sans-serif;
+    //background: #e9e9e9;
+    //border: 1px;
+    //border-color: #e9e9e9;
+    //border-radius: 8px;
+    pointer-events: none;
+}
+
+</style>
+<body>
+
+    <div id="chart">
+      <!-- SVG Chart will go in here -->
+    </div>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script>
+    // Set dimensions of chart
+    var margin = {top: 50, right: 30, bottom: 80, left: 40},
+        width = 700 - margin.left - margin.right,
+        height = 350; // - margin.top - margin.bottom;
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(8)
+        .tickSize(-6, -6)
+        .tickFormat(d => d/1e3)
+        .tickPadding(6)
+
+    var x = d3.scale.ordinal()
+        .rangeBands([0, width + 5]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .tickSize(0, 0);
+
+    // Define tooltip format
+    var thousands_format = d3.format(","); // comma at thousands
+    var percent_format = d3.format(".1f"); // show zeros after decimal place, if necessary
+
+    var colors = {"Income Before<br>Transfers and Taxes" : "#4F844F",
+                  "Means-Tested<br>Transfer" : "#06576D",
+                  "Federal<br>Tax" : "#D17333",
+                  "Income After<br>Transfers and Taxes" : "#7F2969"};
+
+      var data = [
+          {measure: "Income Before<br>Transfers and Taxes", quintile: "Lowest", value: 19000},
+          {measure: "Income Before<br>Transfers and Taxes", quintile: "Second", value: 42000},
+          {measure: "Income Before<br>Transfers and Taxes", quintile: "Middle", value: 69000},
+          {measure: "Income Before<br>Transfers and Taxes", quintile: "Fourth", value: 105000},
+          {measure: "Income Before<br>Transfers and Taxes", quintile: "Highest", value: 282000},
+          {measure: "Means-Tested<br>Transfer", quintile: "Lowest", value: 13000, rate: 64.8},
+          {measure: "Means-Tested<br>Transfer", quintile: "Second", value: 6000, rate: 12.8},
+          {measure: "Means-Tested<br>Transfer", quintile: "Middle", value: 3000, rate: 3.5},
+          {measure: "Means-Tested<br>Transfer", quintile: "Fourth", value: 1000, rate: 1.1},
+          {measure: "Means-Tested<br>Transfer", quintile: "Highest", value: 1000, rate: 0.2},
+          {measure: "Federal<br>Tax", quintile: "Lowest", value: 0, rate: 2.0},  // NOTE: this will be transformed to "<$500" below
+          {measure: "Federal<br>Tax", quintile: "Second", value: 4000, rate: 9.2},
+          {measure: "Federal<br>Tax", quintile: "Middle", value: 10000, rate: 13.6},
+          {measure: "Federal<br>Tax", quintile: "Fourth", value: 19000, rate: 17.4},
+          {measure: "Federal<br>Tax", quintile: "Highest", value: 75000, rate: 26.3},
+          {measure: "Income After<br>Transfers and Taxes", quintile: "Lowest", value: 31000},
+          {measure: "Income After<br>Transfers and Taxes", quintile: "Second", value: 44000},
+          {measure: "Income After<br>Transfers and Taxes", quintile: "Middle", value: 62000},
+          {measure: "Income After<br>Transfers and Taxes", quintile: "Fourth", value: 88000},
+          {measure: "Income After<br>Transfers and Taxes", quintile: "Highest", value: 207000}
+        ];
+
+    var chart = d3.select("#chart").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      x.domain(data.map(function(d) { return d.class; }));
+      //y.domain([0, d3.max(data, function(d) { return d.value; })]);
+      y.domain([0, 300000]);
+
+
+    // Define the div for the tooltip
+    var tooltip = d3.select("#chart").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+    var barWidth = width / (data.length);
+
+    var bar = chart.selectAll("g")
+          .data(data)
+          .enter()
+          .append("g")
+          .attr("transform", function(d, i) { return i <= 4 ? "translate("+ (10 + (i * barWidth) ) + ",0)"     // Add a 10px gap between y-axis and first set of quintile bars
+                                                   : i <= 9 ? "translate("+ (10 + (i * barWidth) + 10) + ",0)"  // Add another 10px gap between each set of quintile bars
+                                                   : i <= 14 ? "translate("+ (10 + (i * barWidth) + 20) + ",0)"
+                                                   : i <= 19 ? "translate("+ (10 + (i * barWidth) + 30) + ",0)"
+                                                   : null ; });
+
+    bar.append("rect")
+       .attr("y", function(d) { return height; }) // Start bars from the bottom
+       .attr("height", function(d) { return 0; }) // With zero height
+       .style("fill", function(d) {
+         return d.value != 0 ? colors[d.measure] : "white"
+       })
+       .transition().duration(1000)
+       .attr("y", function(d) {
+         return d.value != 0 ? y(d.value) : height - 20
+       })   // Then roll up to value
+       .attr("height", function(d) {
+         return d.value != 0 ? height - y(d.value) : 20
+       })
+       .attr("width", barWidth - 5);
+
+    bar.on("mouseover", function(d) {
+        var matrix = this.getScreenCTM()
+                         .translate(+ this.getAttribute("cx"), + this.getAttribute("cy"));
+        tooltip.transition()
+               .duration(200)
+               .style("opacity", 1);
+       if (d.measure == "Means-Tested<br>Transfer") {
+        tooltip.html("<strong>" + d.quintile + " Quintile</strong>" + "<br>Average " + d.measure + "s: <strong>$" + thousands_format(d.value) + "</strong><br>Average " + d.measure + " Rate: " + "<strong>" + percent_format(d.rate) + "%</strong>");
+       }
+
+       else if (d.measure == "Federal<br>Tax") {
+       		if (d.quintile == "Lowest") {                                                                   // Kludgy fix, below! ("<$50")
+       			tooltip.html("<strong>" + d.quintile + " Quintile</strong>" + "<br>Average " + d.measure + "es: <strong><$50" + thousands_format(d.value) + "</strong><br>Average " + d.measure + " Rate: " + "<strong>" + percent_format(d.rate) + "%</strong>");
+       		}
+       		else{
+        		tooltip.html("<strong>" + d.quintile + " Quintile</strong>" + "<br>Average " + d.measure + "es: <strong>$" + thousands_format(d.value) + "</strong><br>Average " + d.measure + " Rate: " + "<strong>" + percent_format(d.rate) + "%</strong>");
+       		}
+       }
+
+       else {
+        tooltip.html("<strong>" + d.quintile + " Quintile</strong>" + "<br>Average " + d.measure + ": <strong>$" + thousands_format(d.value) + "</strong>")
+       };
+
+       tooltip.style("left", window.pageXOffset + matrix.e - barWidth/2 + 5 + "px")
+              .style("top", 455 + "px");
+
+       let thisRect = d3.select(this).select("rect")
+       thisRect.style("stroke", "black")
+               .style("stroke-width", () => d.value != 0 ? 2 : 0)
+
+       if(d.value===0)
+         d3.select(".asterisk").style("stroke", "black").style("stroke-width", 2)
+
+       }
+    );
+
+
+    bar.on("mouseout", function(d) {
+        tooltip.transition()
+               .duration(500)
+               .style("opacity", 0);
+
+        let thisRect = d3.select(this).select("rect")
+
+        thisRect.style("stroke-width", "0")
+        if(d.value===0)
+           d3.select(".asterisk").style("stroke-width", 0)
+        }
+    );
+
+    // Add y-axis
+    let yAxisGroup =
+    chart.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+      yAxisGroup
+      .append("text")
+        //.attr("transform", "rotate(-90)")
+        .attr("y", -28)
+        .attr("x", -3)
+        .style("text-anchor", "end")
+        .text("Thousands")
+
+        yAxisGroup
+          .append("text")
+            .text("of Dollars")
+            .style("text-anchor", "end")
+            .attr("y", -15)
+            .attr("x", -3)
+
+    // Add x-axis
+    /*
+    ** Remove x-axis altogether...
+    ** because it shows the small means-tested transfers values better
+    chart.append("g")
+         .attr("class", "x axis")
+         .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+         .selectAll("text").remove(); // remove x-axis labels
+    */
+
+    /*
+    ** Add Labels
+    */
+
+    // "Income Before Transfers and Taxes"
+    chart.append("text")
+        .style("fill", colors["Income Before<br>Transfers and Taxes"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (2 * barWidth) + (barWidth-5)/2)
+        .attr("y", -50)
+        .text("Income Before")
+        .attr("text-anchor", "middle");
+
+    chart.append("text")
+        .style("fill", colors["Income Before<br>Transfers and Taxes"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (2 * barWidth) + (barWidth-5)/2)
+        .attr("y", -35)
+        .text("Transfers")
+        .attr("text-anchor", "middle");
+
+    chart.append("text")
+        .style("fill", colors["Income Before<br>Transfers and Taxes"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (2 * barWidth) + (barWidth-5)/2)
+        .attr("y", -20)
+        .text("and Taxes")
+        .attr("text-anchor", "middle");
+
+    // Plus
+    chart.append("text")
+        .style("fill", "black")
+        .style("font-weight", "bold")
+        .style("font-style", "italic")
+        .append("tspan")
+        .attr("x", 10 + (5 * barWidth) + 5)
+        .attr("y", -35)
+        //.text("+")
+        .text("plus")
+        .attr("text-anchor", "middle");
+
+    // "Means-Tested Transfers"
+    chart.append("text")
+        .style("fill", colors["Means-Tested<br>Transfer"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (7 * barWidth) + (barWidth-5)/2 + 10)
+        .attr("y", -42.5)
+        .text("Means-Tested")
+        .attr("text-anchor", "middle");
+
+    chart.append("text")
+        .style("fill", colors["Means-Tested<br>Transfer"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (7 * barWidth) + (barWidth-5)/2 + 10)
+        .attr("y", -27.5)
+        .text("Transfers")
+        .attr("text-anchor", "middle");
+
+    // Minus
+    chart.append("text")
+        .style("fill", "black")
+        .style("font-weight", "bold")
+        .style("font-style", "italic")
+        .append("tspan")
+        .attr("x", 10 + (10 * barWidth) + 20 + 5)
+        .attr("y", -35)
+        //.text("\u2013")
+        .text("minus")
+        .attr("text-anchor", "middle");
+
+    // "Federal Taxes"
+    chart.append("text")
+        .style("fill", colors["Federal<br>Tax"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (12 * barWidth) + (barWidth-5)/2 + 20)
+        .attr("y", -42.5)
+        .text("Federal")
+        .attr("text-anchor", "middle");
+
+    chart.append("text")
+        .style("fill", colors["Federal<br>Tax"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (12 * barWidth) + (barWidth-5)/2 + 20)
+        .attr("y", -27.5)
+        .text("Taxes")
+        .attr("text-anchor", "middle");
+
+    // Equals
+    chart.append("text")
+        .style("fill", "black")
+        .style("font-weight", "bold")
+        .style("font-style", "italic")
+        .append("tspan")
+        .attr("x", 10 + (14 * barWidth) + (barWidth-5)/2 + 30 + 5)
+        .attr("y", -35)
+        //.text("=")
+        .text("equals")
+        .attr("text-anchor", "middle");
+
+    // "Income Before Transfers and Taxes"
+    chart.append("text")
+        .style("fill", colors["Income After<br>Transfers and Taxes"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (17 * barWidth) + (barWidth-5)/2 + 30)
+        .attr("y", -50)
+        .text("Income After")
+        .attr("text-anchor", "middle");
+
+    chart.append("text")
+        .style("fill", colors["Income After<br>Transfers and Taxes"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (17 * barWidth) + (barWidth-5)/2 + 30)
+        .attr("y", -35)
+        .text("Transfers")
+        .attr("text-anchor", "middle");
+
+    chart.append("text")
+        .style("fill", colors["Income After<br>Transfers and Taxes"])
+        .style("font-weight", "bold")
+        .append("tspan")
+        .attr("x", 10 + (17 * barWidth) + (barWidth-5)/2 + 30)
+        .attr("y", -20)
+        .text("and Taxes")
+        .attr("text-anchor", "middle");
+
+    // Asterix
+    chart.append("text")
+        .style("fill", "black")
+        .style("font-weight", "bold")
+        .style("font-style", "italic")
+        .append("tspan")
+        .attr("x", 10 + (10 * barWidth) + 20 + 12)
+        .attr("y", 355)
+        .attr("pointer-events", "none")
+        .text("*")
+        .attr("class", "asterisk")
+        .attr("text-anchor", "middle")
+
+    </script>
+</body>

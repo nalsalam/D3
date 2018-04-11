@@ -1,0 +1,414 @@
+<html>
+<head>
+  <!-- <link rel="stylesheet" type="text/css" href="style.css"> -->
+  <meta charset="utf-8"/>
+  <style>
+  body {
+    font-family: sans-serif;
+    width: 600px;
+  }
+
+  h1 {
+    font-family: sans-serif;
+    font-size: 1rem;
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+
+  h2 {
+    font-family: sans-serif;
+    font-size: .9rem;
+    font-weight: 400;
+    margin-bottom: 0px;
+  }
+
+  text {
+    font-size: .9rem;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .line {
+    fill: none;
+    stroke-width: 2px;
+  }
+
+  .recession {
+    fill: #ddd;
+  }
+
+  .label {
+    font-weight: 700;
+  }
+
+  #beforeLabel {
+    color: #4F844F;
+    font-weight: 700;
+  }
+
+  #afterLabel {
+    color: #7F2969;
+    font-weight: 700;
+  }
+
+  #controls {
+    margin-top: 25px;
+    font-size: .9rem;
+  }
+
+  #dataLabel {
+    position: absolute;
+  }
+
+  #dataLabelText,
+  #dataLabelTextBG {
+    font-weight: 700;
+    text-anchor: middle;
+    font-size: 1.1rem;
+  }
+
+  #dataLabelTextBG {
+    stroke: white;
+    stroke-width: 4px;
+  }
+
+  .notes {
+    font-size: .8rem;
+  }
+
+  .axis--x path{
+    display: none;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  </style>
+</head>
+  <body>
+    <h1>
+      Summary Figure 2.
+    </h1>
+    <h1>
+       Cumulative Growth in Average Income, by Income Group, 1979 to 2014
+    </h1>
+    <h2>
+      Percent
+    </h2>
+    <svg width="600" height="400"></svg>
+    <div id="controls">
+
+      <input name="mode" type="radio" value="Before" id="beforeButton" checked><label for="beforeButton">Income <span id="beforeLabel">Before</span> Transfers and Taxes</label><br/>
+      <input name="mode" type="radio" value="After" id="afterButton"><label for="afterButton">Income <span id="afterLabel">After</span> Transfers and Taxes</label>
+
+      <!-- Income (<input name="mode" type="radio" value="Before" id="beforeButton" checked><label for="beforeButton"><span id="beforeLabel">Before</span></label> /
+      <input name="mode" type="radio" value="After" id="afterButton"><label for="afterButton"><span id="afterLabel">After</span>)</label> Transfers and Taxes -->
+    </div>
+    <div class="notes">
+      <p style="margin-top: 40px;">
+        Source: Congressional Budget Office.
+      </p>
+      <p>
+        "Middle Quintiles" are incomes falling between the 21st and 80th percentiles.
+      </p>
+      <p>
+        Gray bars in the chart denote economic recessions.
+      </p>
+      <p>Income before transfers and taxes is market income plus social insurance benefits.</p>
+      <p>Market income consists of labor income, business income, capital gains (profits realized from the sale of assets), capital income (excluding capital gains), income received in retirement for past services, and other sources of income. Social insurance benefits consist of Social Security Old Age, Survivors, and Disability Insurance benefits; Medicare benefits (measured as the average cost to the government to provide those benefits), and unemployment insurance benefits. </p>
+      <p>Means-tested transfers consist of cash payments and in-kind transfers from federal, state, and local governments; the three largest means-tested transfers are Medicaid and the Children’s Health Insurance Program benefits (measured as the average cost to the government to provide those benefits), Supplemental Nutritional Assistance Program benefits (formerly known as Food Stamps), and Supplemental Security Income (SSI).</p>
+      <p>Federal taxes consist of individual income taxes, payroll taxes, corporate income taxes, and excise taxes.</p>
+      <p>Income after transfers and taxes is income before transfers and taxes plus means-tested transfers minus federal taxes.</p>
+      <p>Income groups are created by ranking households by income before transfers and taxes, adjusted for household size. Quintiles (fifths) contain equal numbers of people; percentiles (hundredths) contain equal numbers of people as well.</p>
+      <p style="border-bottom: thin solid black;">For more detailed definitions of income, see the appendix.<br/>&nbsp;</p>
+
+    </div>
+  </body>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+  const svg = d3.select("svg"),
+        margin = {top: 10, right: 125, bottom: 20, left: 30},
+        width = svg.attr("width") - margin.left - margin.right,
+        height = svg.attr("height") - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", "translate("+margin.left+","+margin.top+")")
+
+  const x = d3.scaleLinear().domain([1979,2014]).range([0,width]),
+        y = d3.scaleLinear().domain([125,-25]).range([0,height]),
+        colorsBefore = d3.scaleOrdinal().domain(["lowest", "middle", "highest"]).range(["#9DC69D", "#82A882", "#4F844F"]),
+        colorsAfter = d3.scaleOrdinal().domain(["lowest", "middle", "highest"]).range(["#BA749B", "#A54E7E", "#7F2969"]),
+        properLabels = d3.scaleOrdinal().domain(["lowest", "middle", "highest"]).range(["Lowest Quintile", "Middle Quintiles", "Highest Quintile"])
+
+  const line = d3.line()
+                .x(function(d) { return x(d.year); })
+                .y(function(d) { return y(d.value); });
+
+  let currentData
+  let colors = colorsBefore
+
+  let before = [{"year":1979,"lowest":0,"middle":0,"highest":0},
+{"year":1980,"lowest":-3.8,"middle":-3.2,"highest":-2.6},
+{"year":1981,"lowest":-5,"middle":-3.1,"highest":-3.1},
+{"year":1982,"lowest":-8.2,"middle":-4.4,"highest":-2.3},
+{"year":1983,"lowest":-12.6,"middle":-5.6,"highest":1.2},
+{"year":1984,"lowest":-6.1,"middle":-0.1,"highest":9.8},
+{"year":1985,"lowest":-6.7,"middle":0.2,"highest":11.1},
+{"year":1986,"lowest":-7.5,"middle":2.5,"highest":24.7},
+{"year":1987,"lowest":-10.5,"middle":2,"highest":18.1},
+{"year":1988,"lowest":-7.5,"middle":3.2,"highest":26.4},
+{"year":1989,"lowest":-3.1,"middle":4.3,"highest":26},
+{"year":1990,"lowest":0.1,"middle":5.1,"highest":23},
+{"year":1991,"lowest":0.3,"middle":3.4,"highest":18.9},
+{"year":1992,"lowest":0.5,"middle":3.7,"highest":24},
+{"year":1993,"lowest":0.6,"middle":4.2,"highest":24.1},
+{"year":1994,"lowest":1.2,"middle":5.3,"highest":26.7},
+{"year":1995,"lowest":8.9,"middle":8.9,"highest":33.1},
+{"year":1996,"lowest":8.5,"middle":10.3,"highest":40.6},
+{"year":1997,"lowest":15.2,"middle":13.4,"highest":49.4},
+{"year":1998,"lowest":22.7,"middle":18.1,"highest":59.6},
+{"year":1999,"lowest":28.1,"middle":22.1,"highest":69.9},
+{"year":2000,"lowest":24.6,"middle":22.5,"highest":78.3},
+{"year":2001,"lowest":22.6,"middle":23.1,"highest":62.6},
+{"year":2002,"lowest":21.2,"middle":20.2,"highest":54.8},
+{"year":2003,"lowest":19.4,"middle":20.5,"highest":60.1},
+{"year":2004,"lowest":21.1,"middle":23.6,"highest":74.3},
+{"year":2005,"lowest":24.5,"middle":26.1,"highest":89.1},
+{"year":2006,"lowest":30.5,"middle":28.6,"highest":97},
+{"year":2007,"lowest":37.2,"middle":33,"highest":104.8},
+{"year":2008,"lowest":35.9,"middle":28.8,"highest":85.6},
+{"year":2009,"lowest":30.7,"middle":25.9,"highest":68.4},
+{"year":2010,"lowest":31.3,"middle":26,"highest":77.1},
+{"year":2011,"lowest":28.7,"middle":24.4,"highest":78.0},
+{"year":2012,"lowest":24.9,"middle":24.8,"highest":92.3},
+{"year":2013,"lowest":27.9,"middle":27.4,"highest":85.3},
+{"year":2014,"lowest":24.4,"middle":28.8,"highest":95.7}]
+
+let after = [{"year":1979,"lowest":0,"middle":0,"highest":0},
+{"year":1980,"lowest":-1.1,"middle":-3.2,"highest":-2.4},
+{"year":1981,"lowest":-1.8,"middle":-3.7,"highest":-2.5},
+{"year":1982,"lowest":-3.1,"middle":-3.3,"highest":1.6},
+{"year":1983,"lowest":-5.6,"middle":-4.2,"highest":6},
+{"year":1984,"lowest":-3.8,"middle":1,"highest":14.7},
+{"year":1985,"lowest":-2.5,"middle":1,"highest":16.2},
+{"year":1986,"lowest":-2.4,"middle":3.4,"highest":30.7},
+{"year":1987,"lowest":-2.1,"middle":3.2,"highest":20.5},
+{"year":1988,"lowest":0.4,"middle":4,"highest":29.3},
+{"year":1989,"lowest":5.2,"middle":5.3,"highest":29.6},
+{"year":1990,"lowest":9.7,"middle":6.1,"highest":26.7},
+{"year":1991,"lowest":13.7,"middle":5,"highest":22.1},
+{"year":1992,"lowest":17.7,"middle":6,"highest":26.9},
+{"year":1993,"lowest":21.3,"middle":6.8,"highest":25.2},
+{"year":1994,"lowest":22.5,"middle":7.9,"highest":26.7},
+{"year":1995,"lowest":27.7,"middle":11.5,"highest":32.5},
+{"year":1996,"lowest":27.6,"middle":13,"highest":39.5},
+{"year":1997,"lowest":28.6,"middle":15.7,"highest":48.2},
+{"year":1998,"lowest":35.7,"middle":21.3,"highest":59.1},
+{"year":1999,"lowest":39.3,"middle":25.1,"highest":68.4},
+{"year":2000,"lowest":36.1,"middle":26.1,"highest":76.8},
+{"year":2001,"lowest":39.6,"middle":29.2,"highest":64},
+{"year":2002,"lowest":41.9,"middle":27.7,"highest":57.6},
+{"year":2003,"lowest":43.3,"middle":29.5,"highest":65.5},
+{"year":2004,"lowest":46,"middle":32.8,"highest":79.6},
+{"year":2005,"lowest":49.9,"middle":35,"highest":93.6},
+{"year":2006,"lowest":53.3,"middle":37.5,"highest":101.7},
+{"year":2007,"lowest":57.8,"middle":42.4,"highest":111.8},
+{"year":2008,"lowest":64.2,"middle":42.3,"highest":94.6},
+{"year":2009,"lowest":70.8,"middle":40.8,"highest":77.8},
+{"year":2010,"lowest":71.5,"middle":40.3,"highest":85.2},
+{"year":2011,"lowest":70.8,"middle":39.4,"highest":87.2},
+{"year":2012,"lowest":68.4,"middle":39.7,"highest":101.1},
+{"year":2013,"lowest":70.2,"middle":40.2,"highest":88.0},
+{"year":2014,"lowest":69.5,"middle":42.0,"highest":97.4}]
+
+let recession = [{"start":1980,"end":1980.5},
+{"start":1981.5,"end":1982.75},
+{"start":1990.5,"end":1991},
+{"start":2001,"end":2001.75},
+{"start":2008,"end":2009.25}]
+  //
+  // d3.queue()
+  //     .defer(d3.csv, "before-data.csv", type)
+  //     .defer(d3.csv, "after-data.csv", type)
+  //     .defer(d3.csv, "recession-data.csv", typeRecession)
+  //     .await(ready);
+
+  // function ready(error, before, after, recession) {
+  //   if (error) throw error
+
+    let recessionBars = g.selectAll(".recession")
+      .data(recession)
+        .enter()
+        .append("rect")
+          .attr("x", d => x(d.start))
+          .attr("y", 0)
+          .attr("width", d => x(d.end) - x(d.start))
+          .attr("height", height)
+          .attr("class", "recession")
+
+    //zero line
+    g.append("line").attr("x1", x.range()[0]).attr("x2", x.range()[1]).attr("y1", y(0)).attr("y2", y(0)).style("stroke", "#444")
+
+    //transform the before tax data for charting. three lines means array with three rows
+    let dataBefore = ["lowest","middle","highest"].map( function (id) {
+      return {
+        id: id,
+        values: before.map( function (d){
+          return {year: d.year, value: d[id]}
+        })
+      }
+    })
+
+    //transform after tax data
+    let dataAfter = ["lowest","middle","highest"].map( function (id) {
+      return {
+        id: id,
+        values: after.map( function (d){
+          return {year: d.year, value: d[id]}
+        })
+      }
+    })
+
+    currentData = dataBefore
+
+    let quintiles = g.selectAll(".quintile")
+      .data(currentData)
+      .enter().append("g")
+        .attr("class", "quintile")
+
+    quintiles
+      .append("path")
+        .attr("class", "line")
+        .attr("d", d => line(d.values))
+        .style("stroke", d => colors(d.id))
+
+    quintiles
+      .append("text")
+        .text(d => properLabels(d.id))
+        .attr("x", d => x(2014) + 10)
+        .attr("y", function (d) {
+          let finalYearInSeries = d.values.filter(z => z.year===2014)[0]
+          return y(finalYearInSeries.value)
+        })
+        .style("fill", d => colors(d.id))
+        .attr("class", "label")
+
+    let dataLabel = g.append("circle").attr("r", 5).style("opacity", 0)
+    let dataLabelTextBG = g.append("text").attr("id", "dataLabelTextBG").style("opacity", 0)
+    let dataLabelText = g.append("text").attr("id", "dataLabelText").style("opacity", 0)
+
+    //mouseover behavior
+    svg
+      .on("mousemove", function (d) {
+
+        let xPos = d3.mouse(this)[0]
+        let yPos = d3.mouse(this)[1]
+
+        //don't do mouseover unless mouse is within margins of the chart
+        if(xPos < margin.left || xPos > width + margin.left)
+          return
+
+        //convert the mouseX to a year, find the data for that year from each series
+        let year = Math.round(x.invert(xPos-margin.left))
+        let seriesValuesAtSelectedDate = currentData.map( function (series) {
+          return {
+            id: series.id,
+            value: series.values.filter(z => z.year===year)[0].value
+          }
+        })
+
+        //find the series closest to the mouse
+        let mouseYValue = y.invert(yPos-margin.top)
+        let closenessToMouse = 1e6
+        let closestToMouse
+        seriesValuesAtSelectedDate.forEach(function (z) {
+
+          let thisDistanceToMouse = Math.abs(mouseYValue - z.value)
+
+          if(thisDistanceToMouse < closenessToMouse){
+            closenessToMouse = thisDistanceToMouse
+            closestToMouse = z
+          }
+        })
+
+        dataLabel
+          .attr("cx", x(year))
+          .attr("cy", y(closestToMouse.value))
+          .style("fill", colors(closestToMouse.id))
+          .style("opacity", 1)
+
+        dataLabelText
+          .text(closestToMouse.value.toFixed(1))
+          .attr("x", x(year))
+          .attr("y", y(closestToMouse.value)-10)
+          .style("fill", colors(closestToMouse.id))
+          .style("opacity", 1)
+
+        dataLabelTextBG
+          .text(closestToMouse.value)
+          .attr("x", x(year))
+          .attr("y", y(closestToMouse.value)-10)
+          .style("fill", colors(closestToMouse.id))
+          .style("opacity", 1)
+      })
+      .on("mouseout", function () {
+        dataLabel
+          .style("opacity", 0)
+        dataLabelText
+          .style("opacity", 0)
+        dataLabelTextBG
+          .style("opacity", 0)
+      })
+
+    g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).tickFormat(d3.format("")))
+
+    g.append("g")
+      .attr("class", "axis axis--y")
+      .attr("transform", "translate(0,0)")
+      .call(d3.axisLeft(y).tickSize(-6).tickPadding(6).tickValues([-25,0,25,50,75,100,125]))
+
+    d3.selectAll("#controls input[name=mode]").on("change", function() {
+
+      currentData = this.value==="After" ? dataAfter : dataBefore
+      colors = this.value==="After" ? colorsAfter : colorsBefore
+
+      let updateSelection = g.selectAll(".quintile")
+            .data(currentData)
+
+      updateSelection
+        .select("path")
+          .transition()
+          .attr("d", d => line(d.values))
+          .style("stroke", d => colors(d.id))
+
+      updateSelection
+        .select("text")
+          .transition()
+          .attr("y", function (d) {
+            let finalYearInSeries = d.values.filter(z => z.year===2014)[0]
+            return y(finalYearInSeries.value)
+          })
+          .style("fill", d => colors(d.id))
+    })
+  // }
+
+  function type (d) {
+    d.year = +d.year
+    d.lowest = +d.lowest
+    d.highest = +d.highest
+    d.middle = +d.middle
+
+    return d
+  }
+
+  function typeRecession (d) {
+    d.start = +d.start
+    d.end = +d.end
+
+    return d
+  }
+
+  </script>
+</html>
