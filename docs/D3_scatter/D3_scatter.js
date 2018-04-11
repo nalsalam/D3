@@ -3,7 +3,7 @@ var data = [{"x":5.7957,"y":60.4716,"group":"group 1"},{"x":0.4737,"y":60.039,"g
 // Initial Title
 var point_vals = d3.select("#viz")
   .append("p")
-  .attr("align", "center")
+  .attr("align", "left")
   .text("Mouseover some data!");
 
 //Get how wide our page is in pixels so we can draw our plot in it
@@ -11,7 +11,7 @@ var point_vals = d3.select("#viz")
 // Try: window.innerWidth and window.innerHeight.
 // Or try: document.documentElement.clientWidth and document.documentElement.clientHeight.)
 // var page_width = window.innerWidth;
-var page_width = document.documentElement.clientWidth;
+var page_width = Math.min(700, document.documentElement.clientWidth); 
   
 // set the dimensions and margins of the graph
 var margin = 50,
