@@ -1,0 +1,113 @@
+body {
+  background-color: white;
+}
+
+.ital {
+  font-style: italic;
+}
+
+#wrapper {
+  width: 750px;
+  margin 0 auto;
+}
+
+#title {
+  width: 700px;
+  margin-left: 45px;
+  font: 18px sans-serif;
+  font-weight: bold;
+  column-span: 2;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-color: black;
+}
+
+#subtitle {
+  height: 30px;
+  margin-left: 45px;
+  font: 14px sans-serif;
+  font-weight: bold;
+  padding-top: 10px;
+  column-span: 2;
+}
+
+#chart-button-wrapper {
+  padding: 0px;
+  width: 785px;
+}
+
+#chart {
+  width: 530px;
+  height 350px;
+  float: left;
+  padding: 0px;
+}
+
+#buttons {
+  width: 250px;
+  height: 300px;
+  float: right;
+  padding-top: 22px;
+  padding-bottom: 15px;
+  font: 14px sans-serif;
+}
+
+#legend {
+  float: right;
+  width: 250px;
+}
+
+#footer {
+  clear: both;
+  width: 700px;
+  column-span: 2;
+  margin-left: 45px;
+  font: 12px sans-serif;
+}
+
+#chart svg {
+  background-color: white;
+  text-align: right;
+  padding: 5px 5px 50px 20px;
+  margin: 5px 5px 5px 45px;
+}
+
+#legend svg {
+  background-color: white;
+  height: 75px;
+  text-align: right;
+}
+
+.axis path,
+.axis line {
+  stroke: #999;
+  stroke-width: 2px;
+  shape-rendering: crispEdges;
+}
+
+.point {
+  fill: black;
+}
+
+.grid line {
+  stroke: #ccc;
+  shape-rendering: crispEdges;
+}
+
+.grid path {
+  stroke-width: 0;
+}
+
+div.tooltip {	
+    position: absolute;			
+    text-align: left;			
+    width: 95px;					
+    height: 25px;					
+    padding: 10px;	
+    margin: -25px 15px; 
+    font: 12px sans-serif;		
+    background: #e6e6e6;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}

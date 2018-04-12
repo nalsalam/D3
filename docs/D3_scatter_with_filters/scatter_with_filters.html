@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" >
+</head>
+<html lang="en">
+<body>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <div id="wrapper">
+  <div id="title">
+   
+    Summary Measures of the Quality of Forecasts of Selected Economic Variables,
+   <br>by Forecast Horizon and Forecaster
+   
+  </div>
+ 
+ <div id="subtitle">
+  </div>
+
+  <div id="chart-button-wrapper">
+  
+    <div id="chart">
+    <!-- SVG Chart will go in here -->
+    </div>
+  
+    <div id="buttons">
+     <strong>Economic Variables</strong>
+  <form id="macro_vars">
+    <label><input type="radio" name="macro_buttons" value="Growth of Real Output" checked="checked"> Growth of Real Output</label><br>
+    <label><input type="radio" name="macro_buttons" value="Growth of Nominal Output"> Growth of Nominal Output</label><br>
+    <label><input type="radio" name="macro_buttons" value="Inflation in the Consumer Price Index"> Consumer Price Index</label><br>
+    <label><input type="radio" name="macro_buttons" value="Interest Rate on 3-Month Treasury Bills"> 3-mo. Treasury Bill Rate</label><br>
+    <label><input type="radio" name="macro_buttons" value="Real Interest Rate on 3-Month Treasury Bills"> Real 3-mo. Treasury Bill Rate</label><br>
+    <label><input type="radio" name="macro_buttons" value="Interest Rate on 10-Year Treasury Notes"> 10-yr. Treasury Note Rate</label><br>
+  </form>
+  <br>
+  <strong>Forecast Horizons</strong>
+      <form id="horizon">
+      <input type="radio" name="horizon_buttons" value="Two-Year" checked="checked"> Two-Year Horizon<br>
+      <input type="radio" name="horizon_buttons" value="Five-Year"> Five-Year Horizon<br>
+    </form>
+    <br>
+    <strong>Forecasters</strong>
+      <div id="legend">
+    <!-- SVG Legend will go in here -->
+      </div>
+</div>
+</div> <!-- chart-buttons-wrapper -->
+<!-- The D3 code has to be placed after the definition of the divs it selects and works with -->
+<script src="d3_scatter_with_filters.js"></script>
+
+ <div id="footer">
+ <p>
+The <strong>root mean square error (RMSE)</strong> is a measure of forecasting accuracy. It will always be a positive value; the larger the value, the less accurate the forecasts.<br><br>
+Forecast errors are projected values minus actual values; the <strong>mean error</strong> is the average of the forecast errors. Mean error values greater than zero indicate that the forecaster overestimated the actual values, on average; negative values indicate that the forecaster underestimated the actual values, on average.<br><br>
+Date ranges refer to the years in which the forecasts were made.
+ </p>
+  </div> 
+</div> <!-- wrapper -->
+</body>
+
+</html>
