@@ -332,11 +332,11 @@ sub.selectAll("text")
 ** Set range and domains for axes
 */
 
-var x = d3.scale.linear()
+var x = d3.scaleLinear()
           .range([0, width])
           .domain([-1.5, 1.5]);
 
-var y = d3.scale.linear()
+var y = d3.scaleLinear()
           .range([height, 0])
           .domain([0.0, 2.0]);
 
