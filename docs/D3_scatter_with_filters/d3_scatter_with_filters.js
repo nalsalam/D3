@@ -429,11 +429,14 @@ var format = d3.format(".1f"); // so "0.0" shows up with decimal place shown
 // First the gray points
 errors_chart.selectAll(".gray.point")
             .data(errors_data.filter(function(d) {if (d.horizon == "Two-Year" & d.macro_var != "Growth of Real Output") return d;}))
-           .enter().append("path")
+            .enter().append("circle")
+			  .attr("cx",function(d) { return x(d.mean_error); })
+			  .attr("cy",function(d) { return y(d.rmse); })
+			  .attr("r","9")			  
             .attr("class", "gray point")
             .style("fill", function(d) {if (d.macro_var == "Growth in Real Output" & d.horizon == "Two-Year") {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-            .attr("d", d3.svg.symbol().type("circle").size(9*9))    
-            .attr("transform", function(d) {if (d.horizon == "Two-Year") return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";});
+            // .attr("d", d3.symbolCircle().type("circle").size(9*9))   // v3
+			//  .attr("transform", function(d) {if (d.horizon == "Two-Year") return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";});
 
 // Then the colored points (with the tooltips)
 errors_chart.selectAll(".color.point")
