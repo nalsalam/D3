@@ -65,6 +65,7 @@ body {
   font: 12px sans-serif;
 }
 
+/* svg element within chart div */
 #chart svg {
   background-color: white;
   text-align: right;
@@ -72,12 +73,14 @@ body {
   margin: 5px 5px 5px 45px;
 }
 
+/* svg element within legend div */
 #legend svg {
   background-color: white;
   height: 75px;
   text-align: right;
 }
 
+/* path and line elements of an element with class attribute of axis */
 .axis path,
 .axis line {
   stroke: #999;
@@ -85,6 +88,7 @@ body {
   shape-rendering: crispEdges;
 }
 
+/* .gray.point selects the element with both class attributes */
 .point {
   fill: black;
 }
@@ -97,7 +101,7 @@ body {
 .grid path {
   stroke-width: 0;
 }
-
+/* div with class attribute tooltip */
 div.tooltip {	
     position: absolute;			
     text-align: left;			
