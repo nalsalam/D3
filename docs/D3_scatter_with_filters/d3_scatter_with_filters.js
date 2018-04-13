@@ -432,20 +432,19 @@ errors_chart.selectAll(".gray.point")
             .enter().append("circle")
 			  .attr("cx",function(d) { return x(d.mean_error); })
 			  .attr("cy",function(d) { return y(d.rmse); })
-			  .attr("r","9")			  
+			  .attr("r","5")			  
             .attr("class", "gray point")
             .style("fill", function(d) {if (d.macro_var == "Growth in Real Output" & d.horizon == "Two-Year") {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-            // .attr("d", d3.symbolCircle().type("circle").size(9*9))   // v3
-			//  .attr("transform", function(d) {if (d.horizon == "Two-Year") return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";});
 
 // Then the colored points (with the tooltips)
 errors_chart.selectAll(".color.point")
             .data(errors_data.filter(function(d) {if (d.horizon == "Two-Year" & d.macro_var == "Growth of Real Output") return d;}))
-           .enter().append("path")
+           .enter().append("circle")
+			  .attr("cx",function(d) { return x(d.mean_error); })
+			  .attr("cy",function(d) { return y(d.rmse); })
+			  .attr("r","6")			  
             .attr("class", "color point")
             .style("fill", function(d) {if (d.macro_var == "Growth of Real Output" & d.horizon == "Two-Year") {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-            .attr("d", d3.svg.symbol().type("circle").size(10*10))
-            .attr("transform", function(d) {if (d.horizon == "Two-Year" & d.macro_var == "Growth of Real Output") return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";})
             .on("mouseover", function(d) {if (d.macro_var == "Growth of Real Output" & d.horizon == "Two-Year") {
              tooltip.transition()		
                     .duration(250)		
@@ -476,20 +475,22 @@ function updateVariable() {
   // First, add the gray points   
   errors_chart.selectAll(".gray.point")
               .data(errors_data.filter(function(d) {if (d.horizon == horizon & d.macro_var != macro_var) return d;}))
-             .enter().append("path")
+             .enter().append("circle")
+				.attr("cx", function(d) {return x(d.mean_error);})
+				.attr("cy", function(d) {return y(d.rmse);})
+				.attr("r","5")
               .attr("class", "gray point")
               .style("fill", function(d) {if (d.macro_var == macro_var) {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-              .attr("d", d3.svg.symbol().type("circle").size(9*9))
-              .attr("transform", function(d) {return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";});
 
   // Then, add the colored data points on top (with tooltips)
   errors_chart.selectAll(".color.point")
               .data(errors_data.filter(function(d) {if (d.horizon == horizon & d.macro_var == macro_var) return d;}))
-             .enter().append("path")
+             .enter().append("circle")
+				.attr("cx", function(d) {return x(d.mean_error);})
+				.attr("cy", function(d) {return y(d.rmse);})
+				.attr("r","6")
               .attr("class", "color point")
               .style("fill", function(d) {if (d.macro_var == macro_var) {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-              .attr("d", d3.svg.symbol().type("circle").size(10*10))
-              .attr("transform", function(d) {return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";})
               .on("mouseover", function(d) {
                 if (d.macro_var == macro_var & d.horizon == horizon) {		
                  tooltip.transition().duration(250).style("opacity", 1);		
@@ -524,20 +525,22 @@ function updateHorizon(horizon) {
   // First, add the gray points   
   errors_chart.selectAll(".gray.point")
               .data(errors_data.filter(function(d) {if (d.horizon == horizon & d.macro_var != macro_var) return d;}))
-             .enter().append("path")
+             .enter().append("circle")
+				.attr("cx", function(d) {return x(d.mean_error);})
+				.attr("cy", function(d) {return y(d.rmse);})
+				.attr("r","5")
               .attr("class", "gray point")
               .style("fill", function(d) {if (d.macro_var == macro_var) {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-              .attr("d", d3.svg.symbol().type("circle").size(9*9))
-              .attr("transform", function(d) {return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";});
 
   // Then, add the colored points on top (with tooltips)
   errors_chart.selectAll(".color.point")
               .data(errors_data.filter(function(d) {if (d.horizon == horizon & d.macro_var == macro_var) return d;}))
-             .enter().append("path")
+             .enter().append("circle")
+				.attr("cx", function(d) {return x(d.mean_error);})
+				.attr("cy", function(d) {return y(d.rmse);})
+				.attr("r","6")
               .attr("class", "color point")
               .style("fill", function(d) {if (d.macro_var == macro_var & d.horizon == horizon) {return colors[d.forecaster]} else {return "#e6e6e6"} ;})
-              .attr("d", d3.svg.symbol().type("circle").size(10*10))
-              .attr("transform", function(d) {return "translate(" + x(d.mean_error) + "," + y(d.rmse) + ")";})
               .on("mouseover", function(d) {
                 if (d.macro_var == macro_var & d.horizon == horizon) {		
                  tooltip.transition().duration(250).style("opacity", 1);		
@@ -588,11 +591,12 @@ var legend = d3.select("#legend").append("svg")
 
 legend.selectAll(".point")
   .data(legend_data)
- .enter().append("path")
+ .enter().append("circle")
+	.attr("cx", function(d) {return d.x;} )
+	.attr("cy", function(d) {return d.y;} )
+	.attr("r","6")
   .attr("class", "point")
   .style("fill", function(d) {return colors[d.forecaster];})
-  .attr("d", d3.svg.symbol().type("circle").size(10*10))
-  .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";});
     
  legend.selectAll("text")
    .data(legend_data)

@@ -1,5 +1,14 @@
+/* Right clicking an viewing source code of page on CBO website reveals many of the 
+changes that the web-team made 
+For example: the specify sizes in rems vs. pixels.  Google it. */
+
 body {
   background-color: white;
+  	-webkit-font-smoothing: antialiased;
+	font-family: -apple-system, BlinkMacSystemFont,
+	    "Segoe UI", "Roboto", "Oxygen",
+	    "Ubuntu", "Cantarell", "Fira Sans",
+	    "Droid Sans", "Helvetica Neue", sans-serif;
 }
 
 .ital {
@@ -29,6 +38,7 @@ body {
   font-weight: bold;
   padding-top: 10px;
   column-span: 2;
+  color: rgb(129, 135, 140);
 }
 
 #chart-button-wrapper {
